@@ -1,0 +1,914 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+:root,
+html.dark {
+  --radius: 0.875rem;
+  --background: oklch(0.18 0.05 260);
+  --foreground: oklch(1 0 0);
+  --card: oklch(0.22 0.06 260);
+  --card-foreground: oklch(1 0 0);
+  --primary: oklch(0.55 0.22 265);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.28 0.05 260);
+  --secondary-foreground: oklch(1 0 0);
+  --muted: oklch(0.28 0.04 260);
+  --muted-foreground: oklch(0.7 0.04 260);
+  --accent: oklch(0.55 0.22 265);
+  --accent-foreground: oklch(1 0 0);
+  --destructive: oklch(0.6 0.22 25);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 8%);
+  --ring: oklch(0.7 0.15 250);
+
+  --app-bg: #0A1628;
+  --app-bg-2: #0F2044;
+}
+
+html.light {
+  --background: oklch(0.97 0.02 260);
+  --foreground: oklch(0.18 0.05 260);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.18 0.05 260);
+  --primary: oklch(0.55 0.22 265);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.94 0.02 260);
+  --secondary-foreground: oklch(0.18 0.05 260);
+  --muted: oklch(0.94 0.02 260);
+  --muted-foreground: oklch(0.45 0.04 260);
+  --accent: oklch(0.94 0.02 260);
+  --accent-foreground: oklch(0.18 0.05 260);
+  --destructive: oklch(0.6 0.22 25);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.9 0.02 260);
+  --input: oklch(0.95 0.02 260);
+  --ring: oklch(0.7 0.15 250);
+
+  --app-bg: #F0F4FF;
+  --app-bg-2: #FFFFFF;
+}
+
+@layer base {
+  * { border-color: var(--color-border); }
+  html, body { background-color: var(--app-bg); color: var(--color-foreground); }
+  body {
+    background: radial-gradient(ellipse at top left, rgba(37,99,235,0.15), transparent 50%),
+                radial-gradient(ellipse at bottom right, rgba(79,70,229,0.15), transparent 50%),
+                var(--app-bg);
+    min-height: 100vh;
+  }
+
+  html.light body {
+    background:
+      radial-gradient(ellipse at 8% 10%, rgba(59, 130, 246, 0.12), transparent 34%),
+      radial-gradient(ellipse at 90% 85%, rgba(79, 70, 229, 0.10), transparent 34%),
+      linear-gradient(180deg, #f8fbff 0%, #edf4ff 45%, #f7f9ff 100%);
+  }
+}
+
+@layer utilities {
+  html.light .text-white,
+  html.light .text-white\/80,
+  html.light .text-white\/70,
+  html.light .text-white\/60,
+  html.light .text-white\/50,
+  html.light .text-white\/40,
+  html.light .text-white\/30 {
+    color: #172033 !important;
+  }
+
+  html.light .text-blue-100,
+  html.light .text-blue-200 {
+    color: #1e3a8a !important;
+  }
+
+  html.light .text-blue-300,
+  html.light .text-blue-300\/60 {
+    color: #2563eb !important;
+  }
+
+  html.light .text-emerald-300 {
+    color: #047857 !important;
+  }
+
+  html.light .border-white\/10,
+  html.light .border-white\/15,
+  html.light .border-white\/20,
+  html.light .border-white\/30 {
+    border-color: rgba(37, 99, 235, 0.18) !important;
+  }
+
+  html.light [style*="rgba(255,255,255,0.03)"],
+  html.light [style*="rgba(255,255,255,0.05)"],
+  html.light [style*="rgba(255,255,255,0.06)"],
+  html.light [style*="rgba(255,255,255,0.07)"],
+  html.light [style*="rgba(255,255,255,0.08)"],
+  html.light [style*="rgba(255,255,255,0.1)"],
+  html.light [style*="rgba(255, 255, 255, 0.03)"],
+  html.light [style*="rgba(255, 255, 255, 0.05)"],
+  html.light [style*="rgba(255, 255, 255, 0.06)"],
+  html.light [style*="rgba(255, 255, 255, 0.07)"],
+  html.light [style*="rgba(255, 255, 255, 0.08)"],
+  html.light [style*="rgba(255, 255, 255, 0.1)"] {
+    background: rgba(255, 255, 255, 0.86) !important;
+    border-color: rgba(37, 99, 235, 0.18) !important;
+    box-shadow: 0 16px 40px rgba(30, 64, 175, 0.08);
+  }
+
+  html.light [style*="rgba(30,111,217,0.15)"],
+  html.light [style*="rgba(30, 111, 217, 0.15)"] {
+    background: rgba(219, 234, 254, 0.72) !important;
+    border-color: rgba(37, 99, 235, 0.24) !important;
+    box-shadow: 0 16px 36px rgba(37, 99, 235, 0.10);
+  }
+
+  html.light header {
+    box-shadow: 0 8px 28px rgba(30, 64, 175, 0.08);
+  }
+
+  html.light input,
+  html.light textarea,
+  html.light select {
+    color: #172033 !important;
+    background: rgba(255, 255, 255, 0.86) !important;
+    border-color: rgba(37, 99, 235, 0.22) !important;
+  }
+
+  html.light input::placeholder,
+  html.light textarea::placeholder {
+    color: rgba(71, 85, 105, 0.65) !important;
+  }
+
+  html.light button[style*="linear-gradient"],
+  html.light a[style*="linear-gradient"],
+  html.light button[style*="linear-gradient"] *,
+  html.light a[style*="linear-gradient"] * {
+    color: white !important;
+  }
+
+  html.light .bg-gradient-to-r,
+  html.light .bg-gradient-to-r * {
+    color: white;
+  }
+
+  html.light .bg-clip-text {
+    color: transparent !important;
+  }
+
+  html.light .blur-3xl {
+    opacity: 0.08 !important;
+  }
+
+  .library-hero {
+    background:
+      radial-gradient(circle at 16% 18%, rgba(59, 130, 246, 0.22), transparent 34%),
+      linear-gradient(135deg, rgba(30, 58, 138, 0.72), rgba(49, 46, 129, 0.64));
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .library-hero-icon {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.12);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    font-size: 1.85rem;
+  }
+
+  .library-stat {
+    background: rgba(255, 255, 255, 0.12);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  }
+
+  .library-search {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 16px 38px rgba(0, 0, 0, 0.12);
+  }
+
+  .library-filters {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+    gap: 0.75rem;
+    align-items: end;
+  }
+
+  .library-filter-field {
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  .library-filter-field span {
+    color: rgba(147, 197, 253, 0.78);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .library-filter-field select {
+    width: 100%;
+    border-radius: 0.9rem;
+    padding: 0.72rem 0.9rem;
+    color: white;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    outline: none;
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.1);
+  }
+
+  .library-filter-field select:focus {
+    border-color: rgba(96, 165, 250, 0.55);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+  }
+
+  .library-filter-field option {
+    background: #0f2044;
+    color: white;
+  }
+
+  .library-filter-reset {
+    border-radius: 0.9rem;
+    padding: 0.72rem 1rem;
+    color: rgba(255, 255, 255, 0.82);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.08);
+    font-weight: 700;
+    transition: transform 180ms ease, background 180ms ease, color 180ms ease;
+  }
+
+  .library-filter-reset:hover {
+    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.14);
+    color: white;
+  }
+
+  .library-section-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .library-section-heading h2 {
+    color: white;
+    font-size: 1.15rem;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+
+  .library-section-heading p {
+    color: rgba(147, 197, 253, 0.72);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+  }
+
+  .lesson-card {
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.095), rgba(255, 255, 255, 0.055)) !important;
+    box-shadow: 0 18px 44px rgba(2, 6, 23, 0.22);
+  }
+
+  .lesson-card:hover {
+    border-color: rgba(147, 197, 253, 0.38) !important;
+    box-shadow: 0 24px 54px rgba(2, 6, 23, 0.3);
+  }
+
+  .lesson-card-action {
+    background: linear-gradient(135deg, #2563eb, #3b82f6);
+    box-shadow: 0 12px 24px rgba(37, 99, 235, 0.24);
+  }
+
+  .header-action {
+    border: 1px solid transparent;
+  }
+
+  .header-action:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: white;
+  }
+
+  .lesson-nav-actions {
+    background: rgba(255, 255, 255, 0.06);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  .lesson-nav-button {
+    border: 1px solid transparent;
+  }
+
+  .lesson-nav-button:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: white;
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .worksheet-total-pill {
+    background: linear-gradient(135deg, #1e6fd9, #4da3ff);
+    box-shadow: 0 12px 26px rgba(30, 111, 217, 0.22);
+  }
+
+  .pdf-download-button {
+    transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+  }
+
+  .pdf-download-group {
+    background: linear-gradient(135deg, #1e6fd9, #4da3ff);
+    color: white !important;
+    box-shadow: 0 8px 20px rgba(30, 111, 217, 0.4);
+    transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+  }
+
+  .pdf-download-group * {
+    color: white !important;
+  }
+
+  .pdf-download-group .pdf-download-button {
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .pdf-export-toggle {
+    background: rgba(255, 255, 255, 0.14);
+    border-left: 1px solid rgba(255, 255, 255, 0.2);
+    transition: background 180ms ease;
+  }
+
+  .pdf-export-toggle:hover {
+    background: rgba(255, 255, 255, 0.22);
+  }
+
+  .pdf-export-menu {
+    background: rgba(15, 32, 68, 0.96);
+    border-color: rgba(255, 255, 255, 0.14);
+    backdrop-filter: blur(18px);
+  }
+
+  .pdf-export-option {
+    color: rgba(255, 255, 255, 0.78);
+  }
+
+  .pdf-export-option:hover,
+  .pdf-export-option.is-active {
+    background: rgba(77, 163, 255, 0.14);
+    color: white;
+  }
+
+  .create-new-lesson-primary {
+    background: linear-gradient(135deg, #1e6fd9, #4da3ff);
+    color: white !important;
+    box-shadow: 0 8px 20px rgba(30, 111, 217, 0.4);
+    transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+  }
+
+  .create-new-lesson-primary * {
+    color: white !important;
+  }
+
+  .pdf-download-group:hover,
+  .create-new-lesson-primary:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.08) saturate(1.08);
+    box-shadow: 0 14px 30px rgba(30, 111, 217, 0.48) !important;
+  }
+
+  .pdf-download-group:active,
+  .create-new-lesson-primary:active {
+    transform: translateY(0);
+  }
+
+  .create-lesson-button {
+    transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+  }
+
+  .create-lesson-button:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.08) saturate(1.08);
+    box-shadow: 0 14px 30px rgba(30, 111, 217, 0.48) !important;
+  }
+
+  .create-lesson-button:active {
+    transform: translateY(0);
+  }
+
+  .generate-lesson-button {
+    transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+  }
+
+  .generate-lesson-button:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.08) saturate(1.08);
+    box-shadow: 0 16px 36px rgba(30, 111, 217, 0.52) !important;
+  }
+
+  .generate-lesson-button:active {
+    transform: translateY(0);
+  }
+
+  html.light .library-hero {
+    background:
+      radial-gradient(circle at 15% 20%, rgba(37, 99, 235, 0.16), transparent 32%),
+      radial-gradient(circle at 88% 20%, rgba(14, 165, 233, 0.13), transparent 28%),
+      linear-gradient(135deg, #f8fbff 0%, #dbeafe 50%, #eef2ff 100%);
+    border-bottom: 1px solid rgba(37, 99, 235, 0.14);
+    box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.7);
+  }
+
+  html.light .header-action {
+    color: #172033 !important;
+  }
+
+  html.light .header-action:hover {
+    background: rgba(37, 99, 235, 0.1) !important;
+    border-color: rgba(37, 99, 235, 0.18) !important;
+    color: #1d4ed8 !important;
+    box-shadow: 0 8px 18px rgba(30, 64, 175, 0.08);
+    transform: translateY(-1px);
+  }
+
+  html.light .header-action:hover svg,
+  html.light .header-action:hover * {
+    color: #1d4ed8 !important;
+  }
+
+  html.light .library-hero-icon {
+    background: linear-gradient(135deg, rgba(219, 234, 254, 0.95), rgba(255, 255, 255, 0.9));
+    border: 1px solid rgba(37, 99, 235, 0.18);
+    box-shadow: 0 16px 34px rgba(37, 99, 235, 0.14);
+  }
+
+  html.light .library-stat {
+    background: rgba(255, 255, 255, 0.76) !important;
+    border-color: rgba(37, 99, 235, 0.18) !important;
+    box-shadow: 0 18px 38px rgba(30, 64, 175, 0.11);
+  }
+
+  html.light .library-search {
+    background: rgba(255, 255, 255, 0.94) !important;
+    border-color: rgba(37, 99, 235, 0.18) !important;
+    box-shadow: 0 18px 42px rgba(30, 64, 175, 0.09);
+  }
+
+  html.light .library-filter-field span {
+    color: #2563eb;
+  }
+
+  html.light .library-filter-field select {
+    background: rgba(255, 255, 255, 0.94) !important;
+    border-color: rgba(37, 99, 235, 0.18) !important;
+    color: #172033 !important;
+    box-shadow: 0 14px 32px rgba(30, 64, 175, 0.08);
+  }
+
+  html.light .library-filter-field option {
+    background: white;
+    color: #172033;
+  }
+
+  html.light .library-filter-reset {
+    background: rgba(255, 255, 255, 0.88) !important;
+    border-color: rgba(37, 99, 235, 0.18) !important;
+    color: #1d4ed8 !important;
+    box-shadow: 0 14px 32px rgba(30, 64, 175, 0.08);
+  }
+
+  html.light .library-filter-reset:hover {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+    color: white !important;
+  }
+
+  html.light .library-section-heading h2 {
+    color: #172033;
+  }
+
+  html.light .library-section-heading p {
+    color: #2563eb;
+  }
+
+  html.light .lesson-card {
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 251, 255, 0.94)) !important;
+    border-color: rgba(37, 99, 235, 0.18) !important;
+    box-shadow: 0 18px 42px rgba(30, 64, 175, 0.11);
+  }
+
+  html.light .lesson-card:hover {
+    border-color: rgba(37, 99, 235, 0.3) !important;
+    box-shadow: 0 24px 54px rgba(30, 64, 175, 0.16);
+  }
+
+  html.light .lesson-card-delete {
+    color: rgba(23, 32, 51, 0.52) !important;
+  }
+
+  html.light .lesson-card-action,
+  html.light .lesson-card-action * {
+    color: white !important;
+  }
+
+  html.light .lesson-nav-actions {
+    background: rgba(255, 255, 255, 0.78) !important;
+    border-color: rgba(37, 99, 235, 0.2) !important;
+    box-shadow: 0 16px 36px rgba(30, 64, 175, 0.08);
+  }
+
+  html.light .lesson-nav-button {
+    color: #172033 !important;
+  }
+
+  html.light .lesson-nav-button:hover {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+    color: white !important;
+    box-shadow: 0 10px 22px rgba(37, 99, 235, 0.24);
+    transform: translateY(-1px);
+  }
+
+  html.light .lesson-nav-button:hover svg,
+  html.light .lesson-nav-button:hover * {
+    color: white !important;
+  }
+
+  html.light .worksheet-total-pill {
+    background: linear-gradient(135deg, #1d4ed8, #2563eb) !important;
+    color: white !important;
+    border: 1px solid rgba(29, 78, 216, 0.18);
+    box-shadow: 0 12px 24px rgba(37, 99, 235, 0.22);
+  }
+
+  html.light .pdf-download-group:hover,
+  html.light .create-new-lesson-primary:hover {
+    box-shadow: 0 16px 34px rgba(37, 99, 235, 0.34) !important;
+  }
+
+  html.light .pdf-download-group,
+  html.light .pdf-download-group * {
+    color: white !important;
+  }
+
+  html.light .pdf-export-menu {
+    background: rgba(255, 255, 255, 0.98) !important;
+    border-color: rgba(37, 99, 235, 0.18) !important;
+    box-shadow: 0 20px 46px rgba(30, 64, 175, 0.16);
+  }
+
+  html.light .pdf-export-option {
+    color: #172033 !important;
+  }
+
+  html.light .pdf-export-option:hover,
+  html.light .pdf-export-option.is-active {
+    background: rgba(37, 99, 235, 0.1) !important;
+    color: #1d4ed8 !important;
+  }
+
+  html.light .create-new-lesson-primary,
+  html.light .create-new-lesson-primary * {
+    color: white !important;
+  }
+
+  html.light .create-lesson-button:hover {
+    box-shadow: 0 16px 34px rgba(37, 99, 235, 0.34) !important;
+  }
+
+  html.light .generate-lesson-button:hover {
+    box-shadow: 0 18px 38px rgba(37, 99, 235, 0.34) !important;
+  }
+
+  .dashboard-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    padding: 0.75rem 1rem;
+    color: white;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.08);
+    transition: transform 180ms ease, background 180ms ease, border-color 180ms ease;
+  }
+
+  .dashboard-action:hover {
+    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(147, 197, 253, 0.35);
+  }
+
+  .dashboard-list-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(15, 23, 42, 0.24);
+    padding: 0.85rem 1rem;
+  }
+
+  html.light .dashboard-action {
+    color: #172033;
+    border-color: rgba(37, 99, 235, 0.18);
+    background: rgba(255, 255, 255, 0.72);
+  }
+
+  html.light .dashboard-action:hover {
+    background: rgba(37, 99, 235, 0.1);
+  }
+
+  html.light .text-white\/95,
+  html.light .text-white\/90,
+  html.light .text-white\/85,
+  html.light .text-white\/75,
+  html.light .text-white\/65,
+  html.light .text-white\/20 {
+    color: #172033 !important;
+  }
+
+  html.light .text-blue-100\/80,
+  html.light .text-blue-100\/70,
+  html.light .text-blue-200\/80,
+  html.light .text-blue-200\/70,
+  html.light .text-blue-200\/60,
+  html.light .text-blue-300\/80,
+  html.light .text-blue-300\/70,
+  html.light .text-blue-300\/50 {
+    color: #2563eb !important;
+  }
+
+  html.light .text-emerald-100,
+  html.light .text-emerald-200,
+  html.light .text-emerald-300 {
+    color: #047857 !important;
+  }
+
+  html.light .text-amber-100,
+  html.light .text-amber-200,
+  html.light .text-amber-300 {
+    color: #92400e !important;
+  }
+
+  html.light .text-red-300,
+  html.light .text-red-400 {
+    color: #b91c1c !important;
+  }
+
+  html.light .bg-slate-900\/80,
+  html.light .bg-slate-950\/20,
+  html.light .bg-slate-950\/30,
+  html.light .bg-slate-950\/40,
+  html.light .bg-slate-950\/50,
+  html.light .bg-white\/5,
+  html.light .bg-white\/10,
+  html.light .bg-white\/15,
+  html.light .bg-white\/20 {
+    background: rgba(255, 255, 255, 0.88) !important;
+    border-color: rgba(37, 99, 235, 0.18) !important;
+  }
+
+  html.light .bg-blue-500\/5,
+  html.light .bg-blue-500\/10,
+  html.light .bg-blue-500\/15,
+  html.light .bg-blue-400\/10 {
+    background: rgba(219, 234, 254, 0.74) !important;
+    border-color: rgba(37, 99, 235, 0.22) !important;
+  }
+
+  html.light .bg-emerald-400\/10,
+  html.light .bg-emerald-500\/10,
+  html.light .bg-emerald-500\/15 {
+    background: rgba(209, 250, 229, 0.78) !important;
+    border-color: rgba(5, 150, 105, 0.24) !important;
+  }
+
+  html.light .bg-amber-400\/10,
+  html.light .bg-amber-500\/10 {
+    background: rgba(254, 243, 199, 0.82) !important;
+    border-color: rgba(217, 119, 6, 0.26) !important;
+  }
+
+  html.light .bg-red-500\/10,
+  html.light .bg-red-500\/15 {
+    background: rgba(254, 226, 226, 0.78) !important;
+    border-color: rgba(220, 38, 38, 0.24) !important;
+  }
+
+  html.light .border-blue-300\/15,
+  html.light .border-blue-300\/20,
+  html.light .border-blue-300\/25,
+  html.light .border-blue-300\/30,
+  html.light .border-blue-400\/20,
+  html.light .border-emerald-300\/20,
+  html.light .border-emerald-300\/30,
+  html.light .border-emerald-400\/20,
+  html.light .border-amber-300\/20,
+  html.light .border-amber-300\/30,
+  html.light .border-red-300\/20,
+  html.light .border-red-400\/25 {
+    border-color: rgba(37, 99, 235, 0.2) !important;
+  }
+
+  html.light .dashboard-list-row {
+    background: rgba(255, 255, 255, 0.86) !important;
+    border-color: rgba(37, 99, 235, 0.16) !important;
+    box-shadow: 0 10px 26px rgba(30, 64, 175, 0.06);
+  }
+
+  html.light table .bg-slate-950\/20 {
+    background: rgba(255, 255, 255, 0.9) !important;
+  }
+
+  html.light .recharts-cartesian-axis-tick text,
+  html.light .recharts-text,
+  html.light .recharts-label {
+    fill: #1e3a8a !important;
+  }
+
+  html.light .recharts-cartesian-grid line {
+    stroke: rgba(37, 99, 235, 0.14) !important;
+  }
+
+  html.light .line-clamp-2 {
+    color: #172033 !important;
+  }
+
+  html.light .text-white\/30,
+  html.light .text-white\/25,
+  html.light .text-white\/15,
+  html.light .text-white\/10 {
+    color: rgba(23, 32, 51, 0.72) !important;
+  }
+
+  html.light .text-blue-300\/60,
+  html.light .text-blue-400,
+  html.light .text-indigo-300 {
+    color: #1d4ed8 !important;
+  }
+
+  html.light .text-emerald-100\/80,
+  html.light .text-emerald-400 {
+    color: #047857 !important;
+  }
+
+  html.light .text-amber-400,
+  html.light .text-orange-300 {
+    color: #b45309 !important;
+  }
+
+  html.light .text-red-200 {
+    color: #b91c1c !important;
+  }
+
+  html.light .bg-slate-900,
+  html.light .bg-slate-950\/70 {
+    background: rgba(255, 255, 255, 0.92) !important;
+    border-color: rgba(37, 99, 235, 0.18) !important;
+  }
+
+  html.light .bg-blue-500\/20,
+  html.light .bg-blue-900\/30,
+  html.light .bg-indigo-500\/20 {
+    background: rgba(219, 234, 254, 0.82) !important;
+    border-color: rgba(37, 99, 235, 0.24) !important;
+  }
+
+  html.light .bg-emerald-500\/20,
+  html.light .bg-emerald-500\/25 {
+    background: rgba(209, 250, 229, 0.86) !important;
+    border-color: rgba(5, 150, 105, 0.26) !important;
+  }
+
+  html.light .bg-orange-500\/20 {
+    background: rgba(255, 237, 213, 0.86) !important;
+    border-color: rgba(234, 88, 12, 0.26) !important;
+  }
+
+  html.light .bg-red-400\/10,
+  html.light .bg-red-500\/20,
+  html.light .bg-red-500\/30 {
+    background: rgba(254, 226, 226, 0.84) !important;
+    border-color: rgba(220, 38, 38, 0.26) !important;
+  }
+
+  html.light .border-blue-300\/60,
+  html.light .border-blue-400\/25,
+  html.light .border-blue-400\/30,
+  html.light .border-emerald-400\/30,
+  html.light .border-emerald-400\/35,
+  html.light .border-indigo-400\/30,
+  html.light .border-red-300\/25,
+  html.light .border-red-400\/30,
+  html.light .border-red-400\/35 {
+    border-color: rgba(37, 99, 235, 0.22) !important;
+  }
+
+  html.light .placeholder-white\/40::placeholder,
+  html.light .placeholder-white\/50::placeholder,
+  html.light .placeholder-blue-100\/50::placeholder {
+    color: rgba(23, 32, 51, 0.48) !important;
+  }
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+
+  html,
+  body {
+    background: white !important;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  header,
+  main > :not(#print-content) {
+    display: none !important;
+  }
+
+  main {
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  #print-content,
+  #print-content * {
+    display: revert;
+    visibility: visible !important;
+  }
+
+  #print-content.hidden {
+    display: block !important;
+  }
+
+  #print-content {
+    position: static !important;
+    width: 100%;
+    background: white !important; color: black !important;
+    padding: 0;
+  }
+
+  #print-content h1, #print-content h2, #print-content p, #print-content pre {
+    color: black !important; background: white !important;
+  }
+
+  #print-content .print-doc {
+    color: #0f172a !important;
+    font-size: 11pt;
+    line-height: 1.45;
+  }
+
+  #print-content .print-page {
+    padding-top: 0;
+  }
+
+  #print-content .print-page-break {
+    break-before: page;
+    page-break-before: always;
+    padding-top: 0;
+  }
+
+  #print-content section {
+    break-inside: auto;
+  }
+
+  #print-content table,
+  #print-content tr,
+  #print-content .break-inside-avoid {
+    break-inside: avoid;
+  }
+}
