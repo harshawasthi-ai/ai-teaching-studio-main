@@ -12,6 +12,9 @@ export default defineConfig({
   // Disable Cloudflare plugin on Vercel environment to compile Vercel-compatible outputs
   cloudflare: process.env.VERCEL !== "1",
   tanstackStart: {
-    server: { entry: "server" },
+    server: { 
+      entry: "server",
+      preset: process.env.VERCEL === "1" ? "vercel" : undefined
+    },
   },
 });
