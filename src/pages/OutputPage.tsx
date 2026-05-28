@@ -721,6 +721,23 @@ function OutputPageInner() {
     if (section === 'homework' && homeworkSubmittedAt) return
     if (section === 'worksheet' && worksheetSubmittedAt) return
 
+    if (section === 'homework') {
+      const cleanAnswer = String(studentHomeworkAnswer || '').trim()
+      if (!cleanAnswer) {
+        toast.error('❌ Please type your homework answer before submitting.')
+        return
+      }
+    }
+
+    if (section === 'worksheet') {
+      const answers = Object.values(studentWorksheetAnswers || {})
+      const hasAnswers = answers.some(ans => ans && String(ans).trim())
+      if (!hasAnswers) {
+        toast.error('❌ Please answer at least one question before submitting your worksheet.')
+        return
+      }
+    }
+
     const currentLessonId = lesson.id ?? lesson.metadata?.id
     const teacherId = lesson.metadata?.teacher_id
     if (!currentLessonId || !teacherId) {
@@ -1719,7 +1736,7 @@ const WORKSHEET_GROUPS: {
 }[] = [
   { key: 'worksheet_mcq', label: 'Section A - Multiple Choice Questions', description: '1 mark each', match: question => Boolean(question.isMcq) },
   { key: 'one_sentence', label: 'Section B - One Word / One Sentence Answer Questions', description: '1 mark each', match: question => !question.isMcq && marksFor(question) <= 1 },
-  { key: 'short', label: 'Section C - Short Answer Questions', description: '2 marks each', match: question => !question.isMcq && marksFor(question) === 2 },
+  { key: 'short', label: 'Section C - Short Answer Questions', description: '2 marks each', match: question => !question.isMcq && marksFor(question) >= 2 && marksFor(question) < 5 },
   { key: 'long', label: 'Section D - Long Answer Questions', description: '5 marks each', match: question => !question.isMcq && marksFor(question) >= 5 },
 ] as const
 

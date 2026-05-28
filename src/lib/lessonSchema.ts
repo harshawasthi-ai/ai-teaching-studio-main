@@ -58,7 +58,7 @@ const worksheetSectionSchema = z.object({
 const worksheetSchema = z.object({
   instructions: z.string().default(''),
   mcq: z.array(mcqSchema),
-  sections: z.array(worksheetSectionSchema).min(3),
+  sections: z.array(worksheetSectionSchema).min(1),
   total_marks: z.coerce.number().optional(),
 }).passthrough()
 
