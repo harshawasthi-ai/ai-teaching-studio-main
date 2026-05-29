@@ -1,0 +1,427 @@
+{
+  "name": "AI-Teaching-studio",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "generate-lesson",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, -16],
+      "id": "d623deea-900b-481d-ad30-ef643f219d1d",
+      "name": "Webhook",
+      "webhookId": "YOUR_WEBHOOK_ID"
+    },
+    {
+      "parameters": {
+        "jsCode": "const fail = (message) => [{\n  json: {\n    success: false,\n    error: message,\n  },\n}];\n\nconst body = $input.first().json.body;\n\nif (!body || typeof body !== 'object') {\n  return fail('Invalid request body');\n}\n\nif (body.mode === 'regenerate_worksheet_answer') {\n  if (!body.user_id || String(body.user_id).trim() === '') {\n    return fail('Missing user_id');\n  }\n\n  if (!body.question || typeof body.question !== 'object') {\n    return fail('Missing question');\n  }\n\n  return [{\n    json: {\n      success: true,\n      mode: 'regenerate_worksheet_answer',\n      regenerate_mode: body.regenerate_mode || 'worksheet_answer',\n      user_id: String(body.user_id).trim(),\n      metadata: body.metadata || {},\n      question: body.question,\n      current_answer: body.current_answer || {},\n      answer_key_instruction: String(body.answer_key_instruction || '').substring(0, 1000),\n    },\n  }];\n}\n\nconst required = ['subject', 'grade', 'topic', 'duration', 'objectives', 'language'];\nconst missing = required.filter(f => !body[f] || String(body[f]).trim() === '');\n\nif (missing.length > 0) {\n  return fail('Missing fields: ' + missing.join(', '));\n}\n\nif (!body.user_id || String(body.user_id).trim() === '') {\n  return fail('Missing user_id');\n}\n\nconst controls = body.question_controls || body.question_counts || {};\n\nconst clamp = (value, fallback, min, max) => {\n  const n = Number(value ?? fallback);\n  if (!Number.isFinite(n)) return fallback;\n  return Math.max(min, Math.min(max, Math.round(n)));\n};\n\nconst question_controls = {\n  worksheet_mcq: clamp(controls.worksheet_mcq ?? body.worksheetMcqQuestions, 2, 0, 10),\n  one_mark: clamp(controls.one_mark ?? body.oneMarkQuestions, 2, 0, 10),\n  two_mark: clamp(controls.two_mark ?? body.twoMarkQuestions, 2, 0, 10),\n  five_mark: clamp(controls.five_mark ?? body.fiveMarkQuestions, 1, 0, 10),\n  mcq: clamp(controls.mcq ?? body.mcqQuestions, 10, 10, 10),\n};\n\nconst guidance = body.grade_level_guidance || {};\n\nconst grade_level_guidance = {\n  grade: guidance.grade ?? null,\n  target_thinking_level: String(\n    guidance.target_thinking_level ||\n    'Use a general grade-appropriate mix of Remember, Understand, Apply, and Analyze questions.'\n  ).substring(0, 500),\n  recommended_question_types: String(\n    guidance.recommended_question_types ||\n    'Use clear MCQs, short answer questions, medium answer questions, and long answer questions suitable for the stated grade.'\n  ).substring(0, 1200),\n};\n\nreturn [{\n  json: {\n    success: true,\n    mode: body.mode || '',\n    user_id: String(body.user_id).trim().substring(0, 100),\n    subject: String(body.subject).trim().substring(0, 100),\n    grade: String(body.grade).trim().substring(0, 50),\n    topic: String(body.topic).trim().substring(0, 100),\n    duration: String(body.duration).trim().substring(0, 50),\n    objectives: String(body.objectives).trim().substring(0, 500),\n    language: ['English', 'Hindi'].includes(body.language) ? body.language : 'English',\n    question_controls,\n    grade_level_guidance,\n    worksheet_format_instruction: String(body.worksheet_format_instruction || '').substring(0, 3000),\n    answer_key_instruction: String(body.answer_key_instruction || '').substring(0, 1000),\n  },\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [208, -16],
+      "id": "329d19bd-5e72-49e5-9903-2b12a783a784",
+      "name": "Validate Input"
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\n\nconst qc = d.question_controls || {\n  worksheet_mcq: 2,\n  one_mark: 2,\n  two_mark: 2,\n  five_mark: 1,\n  mcq: 10,\n};\n\nqc.worksheet_mcq = Number(qc.worksheet_mcq ?? 2);\nqc.one_mark = Number(qc.one_mark ?? 2);\nqc.two_mark = Number(qc.two_mark ?? 2);\nqc.five_mark = Number(qc.five_mark ?? 1);\nqc.mcq = Number(qc.mcq ?? 10);\n\nconst gradeGuidance = d.grade_level_guidance || {\n  grade: null,\n  target_thinking_level:\n    'Use a general grade-appropriate mix of Remember, Understand, Apply, and Analyze questions.',\n  recommended_question_types:\n    'Use clear MCQs, short answer questions, medium answer questions, and long answer questions suitable for the stated grade.',\n};\n\nconst worksheetTotal =\n  qc.worksheet_mcq * 1 +\n  qc.one_mark * 1 +\n  qc.two_mark * 2 +\n  qc.five_mark * 5;\n\nconst quizTotal = qc.mcq * 1;\n\nconst makeQuestions = (count, startNumber, marks, difficulty) =>\n  Array.from({ length: count }, (_, i) => ({\n    q_number: startNumber + i,\n    question: 'FILL',\n    difficulty,\n    marks,\n  }));\n\nconst makeMcqs = (count, startNumber = 1) =>\n  Array.from({ length: count }, (_, i) => ({\n    q_number: startNumber + i,\n    question: 'FILL',\n    options: {\n      A: 'FILL',\n      B: 'FILL',\n      C: 'FILL',\n      D: 'FILL',\n    },\n    correct_option: ['A', 'B', 'C', 'D'][i % 4],\n    marks: 1,\n  }));\n\nlet worksheetQNumber = 1;\n\nconst worksheetMcqs = makeMcqs(qc.worksheet_mcq, worksheetQNumber);\nworksheetQNumber += qc.worksheet_mcq;\n\nconst sectionB = makeQuestions(qc.one_mark, worksheetQNumber, 1, 'easy');\nworksheetQNumber += qc.one_mark;\n\nconst sectionC = makeQuestions(qc.two_mark, worksheetQNumber, 2, 'medium');\nworksheetQNumber += qc.two_mark;\n\nconst sectionD = makeQuestions(qc.five_mark, worksheetQNumber, 5, 'hard');\n\nconst quizMcqs = makeMcqs(qc.mcq, 1);\n\nconst worksheetAnswers = [\n  ...worksheetMcqs.map(q => ({\n    q_number: q.q_number,\n    answer: q.correct_option,\n    explanation: 'FILL',\n  })),\n  ...sectionB.map(q => ({\n    q_number: q.q_number,\n    answer: 'FILL',\n    explanation: 'FILL',\n  })),\n  ...sectionC.map(q => ({\n    q_number: q.q_number,\n    answer: 'FILL with a complete 30-50 word model answer',\n    explanation: 'Brief marking guidance',\n  })),\n  ...sectionD.map(q => ({\n    q_number: q.q_number,\n    answer: 'FILL with a complete 100-150 word model answer',\n    explanation: 'Brief marking guidance',\n  })),\n];\n\nconst quizAnswers = quizMcqs.map(q => ({\n  q_number: q.q_number,\n  answer: q.correct_option,\n  explanation: 'FILL',\n}));\n\nconst expectedJson = {\n  metadata: {\n    subject: d.subject,\n    grade: d.grade,\n    topic: d.topic,\n    duration: d.duration,\n    language: d.language,\n    objectives: d.objectives,\n    generated_at: '',\n    question_counts: qc,\n    grade_level_guidance: gradeGuidance,\n  },\n\n  lesson_plan: {\n    warm_up: {\n      duration: '5 minutes',\n      activity:\n        'Write a detailed 3-5 sentence warm-up activity with teacher action and expected student response.',\n      purpose:\n        'Explain in 2-3 sentences how this warm-up activates prior knowledge and connects to the topic.',\n    },\n    concept_introduction: {\n      duration: '10 minutes',\n      content:\n        'Write 2-3 detailed grade-appropriate paragraphs explaining the concept clearly with examples.',\n      key_terms: ['term1', 'term2', 'term3', 'term4', 'term5'],\n    },\n    guided_activity: {\n      duration: '15 minutes',\n      description:\n        'Write step-by-step classroom instructions including teacher actions, student task, expected output, and timing.',\n      materials: ['item1', 'item2', 'item3'],\n    },\n    recap: {\n      duration: '5 minutes',\n      questions: ['q1', 'q2', 'q3', 'q4'],\n    },\n    homework: {\n      description:\n        'Write a clear homework task with expected answer length and submission expectation.',\n    },\n  },\n\n  worksheet: {\n    instructions: 'Answer the following questions to the best of your ability.',\n    mcq: worksheetMcqs,\n    sections: [\n      {\n        section_title: 'Section B - One Word / One Sentence Answer Questions',\n        questions: sectionB,\n      },\n      {\n        section_title: 'Section C - Short Answer Questions',\n        questions: sectionC,\n      },\n      {\n        section_title: 'Section D - Long Answer Questions',\n        questions: sectionD,\n      },\n    ],\n    total_marks: worksheetTotal,\n  },\n\n  quiz: {\n    instructions: 'Choose the best answer for each question.',\n    mcq: quizMcqs,\n    short_answer: [],\n    total_marks: quizTotal,\n  },\n\n  answer_key: {\n    worksheet_answers: worksheetAnswers,\n    quiz_answers: quizAnswers,\n    grading_rubric: {\n      total_marks: worksheetTotal,\n      grade_bands: [\n        {\n          range: Math.ceil(worksheetTotal * 0.8) + '-' + worksheetTotal,\n          grade: 'A',\n          descriptor: 'Excellent',\n        },\n        {\n          range:\n            Math.ceil(worksheetTotal * 0.6) +\n            '-' +\n            (Math.ceil(worksheetTotal * 0.8) - 1),\n          grade: 'B',\n          descriptor: 'Good',\n        },\n        {\n          range:\n            Math.ceil(worksheetTotal * 0.4) +\n            '-' +\n            (Math.ceil(worksheetTotal * 0.6) - 1),\n          grade: 'C',\n          descriptor: 'Satisfactory',\n        },\n        {\n          range: '0-' + (Math.ceil(worksheetTotal * 0.4) - 1),\n          grade: 'D',\n          descriptor: 'Needs Improvement',\n        },\n      ],\n    },\n  },\n};\n\nconst prompt = [\n  'You are an expert curriculum designer and experienced classroom teacher.',\n  'Generate a complete, detailed, classroom-ready lesson kit.',\n  'Return ONLY raw JSON. Do not use markdown, code fences, comments, or explanation.',\n  '',\n\n  'CRITICAL JSON RULES:',\n'- Return valid JSON only.',\n'- Every key must use double quotes.',\n'- Every string must use double quotes.',\n'- Do not use markdown.',\n'- Do not use trailing commas.',\n'- Do not stop until the full JSON object is complete.',\n'- Before returning, mentally validate that every opened { and [ is properly closed.',\n'- lesson_plan.warm_up, lesson_plan.concept_introduction, lesson_plan.guided_activity, lesson_plan.recap, and lesson_plan.homework must be sibling objects, not nested inside each other.',\n'- worksheet.total_marks must be outside worksheet.sections, not inside the sections array.',\n'',\n\n    'Lesson details:',\n  'Subject: ' + d.subject,\n  'Grade: ' + d.grade,\n  'Topic: ' + d.topic,\n  'Duration: ' + d.duration,\n  'Objectives: ' + d.objectives,\n  'Language: ' + d.language,\n  '',\n\n  'FRONTEND WORKSHEET FORMAT INSTRUCTION:',\n  d.worksheet_format_instruction || 'Use the worksheet counts and grade-level guidance exactly as provided.',\n  '',\n\n  'GRADE-LEVEL THINKING GUIDANCE:',\n  '- Target thinking level: ' + gradeGuidance.target_thinking_level,\n  '- Recommended question types: ' + gradeGuidance.recommended_question_types,\n  '- Use this guidance mainly for worksheet questions, and lightly for quiz MCQs.',\n  '- Do not show Bloom, DOK, or thinking-level labels in the student worksheet.',\n  '- Keep the worksheet clean and teacher-friendly.',\n  '',\n\n  'LESSON PLAN DETAIL RULES:',\n  '- The lesson_plan must be detailed enough that a teacher can directly teach from it.',\n  '- warm_up.activity must be 3-5 sentences and include teacher action plus expected student response.',\n  '- warm_up.purpose must be 2-3 sentences explaining why the warm-up connects to the topic.',\n  '- concept_introduction.content must be 2-3 detailed paragraphs suitable for the grade level.',\n  '- concept_introduction.content must include examples, definitions, and simple explanations.',\n  '- concept_introduction.key_terms must include 5-8 important terms.',\n  '- guided_activity.description must include step-by-step teacher instructions, student task, expected output, and timing.',\n  '- guided_activity.materials must include all required classroom materials.',\n  '- recap.questions must include 4-6 useful recap questions.',\n  '- homework.description must include a clear task, expected answer length, and submission expectation.',\n  '- Avoid short generic lines. Every lesson-plan section should be useful for a real teacher.',\n  '',\n\n  'WORKSHEET STRUCTURE RULES:',\n  '- The worksheet must have exactly 4 sections.',\n  '- Section A must be worksheet.mcq.',\n  '- Section B must be inside worksheet.sections.',\n  '- Section C must be inside worksheet.sections.',\n  '- Section D must be inside worksheet.sections.',\n  '- Worksheet MCQs must be newly generated for the worksheet.',\n  '- Do not copy quiz MCQs into worksheet.mcq.',\n  '- Quiz MCQs and worksheet MCQs must be different.',\n  '',\n\n  'STRICT WORKSHEET QUESTION COUNT RULES:',\n  '- Generate exactly ' + qc.worksheet_mcq + ' worksheet MCQs in worksheet.mcq for Section A.',\n  '- Generate exactly ' + qc.one_mark + ' one-mark questions in Section B.',\n  '- Generate exactly ' + qc.two_mark + ' two-mark questions in Section C.',\n  '- Generate exactly ' + qc.five_mark + ' five-mark questions in Section D.',\n  '- Do not generate more or fewer worksheet questions than these counts.',\n  '',\n\n  'WORKSHEET MARKS RULES:',\n  '- Section A MCQ marks must always be 1.',\n  '- Section B question marks must always be 1.',\n  '- Section C question marks must always be 2.',\n  '- Section D question marks must always be 5.',\n  '- worksheet.total_marks must equal ' + worksheetTotal + '.',\n  '',\n\n  'QUIZ RULES:',\n  '- Generate exactly ' + qc.mcq + ' quiz MCQs in quiz.mcq.',\n  '- Quiz MCQs must be separate from worksheet MCQs.',\n  '- Each quiz MCQ must have 4 options: A, B, C, D.',\n  '- Each quiz MCQ must have marks: 1.',\n  '- quiz.short_answer must be an empty array.',\n  '- quiz.total_marks must equal ' + quizTotal + '.',\n  '',\n\n  'ANSWER KEY RULES:',\n  '- answer_key.worksheet_answers must contain exactly ' +\n    worksheetAnswers.length +\n    ' answers.',\n  '- answer_key.worksheet_answers must include answers for worksheet.mcq and all worksheet.sections questions.',\n  '- answer_key.quiz_answers must contain exactly ' +\n    qc.mcq +\n    ' answers.',\n  '- answer_key.quiz_answers must include answers only for quiz.mcq questions.',\n  '- Do not put quiz answers inside worksheet_answers.',\n  '- Do not put worksheet answers inside quiz_answers.',\n  '- Every answer should include a helpful explanation.',\n  '- answer_key.grading_rubric.total_marks must equal worksheet.total_marks only.',\n  '- Grading rubric must not include quiz marks.',\n  '',\n\n  'ANSWER LENGTH RULES:',\nd.answer_key_instruction ||\n  'For answer_key.worksheet_answers: Section C two-mark short-answer answers must be around 30-50 words each. Section D five-mark long-answer answers must be around 100-150 words each.',\n'- One-mark answers should be concise.',\n'- Two-mark / Section C answers should be around 30-50 words each.',\n'- Five-mark / Section D answers should be around 100-150 words each.',\n'- Put the complete model answer in the answer field. Use explanation only for brief marking guidance if needed.',\n'',\n\n  'Return this exact JSON structure with all fields filled.',\n  'Preserve the same array lengths and marks values shown here:',\n  JSON.stringify(expectedJson),\n].join('\\n');\n\nreturn [\n  {\n    json: {\n      expected_counts: {\n        worksheet_mcq: qc.worksheet_mcq,\n        one_mark: qc.one_mark,\n        two_mark: qc.two_mark,\n        five_mark: qc.five_mark,\n        quiz_mcq: qc.mcq,\n        worksheet_answers:\n          qc.worksheet_mcq + qc.one_mark + qc.two_mark + qc.five_mark,\n        quiz_answers: qc.mcq,\n        worksheet_total_marks: worksheetTotal,\n        quiz_total_marks: quizTotal,\n      },\n      requestBody: {\n        model: 'google/gemini-2.0-flash-001',\n        messages: [\n          {\n            role: 'user',\n            content: prompt,\n          },\n        ],\n        temperature: 0.2,\n        max_tokens: 24000,\n        response_format: { type: 'json_object' },\n      },\n    },\n  },\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [912, -16],
+      "id": "aecccb10-71db-46b2-b743-2fb674abbc3b",
+      "name": "Build Prompt"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.requestBody) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1120, -16],
+      "id": "0ca55863-da00-4bc7-802c-8547adf5deb5",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YOUR_OPENROUTER_CREDENTIAL_ID",
+          "name": "OpenRouter API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst rawText = response?.choices?.[0]?.message?.content;\n\nif (!rawText) {\n  return [{\n    json: { success: false, error: \"AI returned empty response\" }\n  }];\n}\n\nlet cleaned = rawText.trim();\ncleaned = cleaned.replace(/^```json\\s*/i, '');\ncleaned = cleaned.replace(/^```\\s*/i, '');\ncleaned = cleaned.replace(/\\s*```$/i, '');\ncleaned = cleaned.trim();\n\nlet lessonKit;\n\ntry {\n  lessonKit = JSON.parse(cleaned);\n} catch (e) {\n  return [{\n    json: {\n      success: false,\n      error: \"Invalid JSON from AI: \" + cleaned.substring(0, 200)\n    }\n  }];\n}\n\nif (lessonKit.success && lessonKit.data) {\n  lessonKit = lessonKit.data;\n}\n\nconst required = ['metadata', 'lesson_plan', 'worksheet', 'quiz', 'answer_key'];\nconst missing = required.filter(k => !lessonKit[k]);\n\nif (missing.length > 0) {\n  return [{\n    json: {\n      success: false,\n      error: \"Missing sections: \" + missing.join(', ')\n    }\n  }];\n}\n\nlessonKit.worksheet.mcq = Array.isArray(lessonKit.worksheet.mcq)\n  ? lessonKit.worksheet.mcq\n  : [];\n\nlessonKit.worksheet.sections = Array.isArray(lessonKit.worksheet.sections)\n  ? lessonKit.worksheet.sections\n  : [];\n\nlessonKit.quiz.mcq = Array.isArray(lessonKit.quiz.mcq)\n  ? lessonKit.quiz.mcq\n  : [];\n\nlessonKit.quiz.short_answer = [];\n\nconst expected = $('Build Prompt').first().json.expected_counts;\n\nconst fail = (message) => [{\n  json: {\n    success: false,\n    error: message,\n  },\n}];\n\nconst sectionQuestions = (index) => {\n  const section = lessonKit.worksheet.sections[index];\n  return Array.isArray(section?.questions) ? section.questions : [];\n};\n\nif (lessonKit.worksheet.mcq.length !== expected.worksheet_mcq) {\n  return fail(\n    'AI generated incorrect worksheet MCQ count. Expected ' +\n    expected.worksheet_mcq +\n    ', got ' +\n    lessonKit.worksheet.mcq.length\n  );\n}\n\nif (sectionQuestions(0).length !== expected.one_mark) {\n  return fail(\n    'AI generated incorrect one-mark question count. Expected ' +\n    expected.one_mark +\n    ', got ' +\n    sectionQuestions(0).length\n  );\n}\n\nif (sectionQuestions(1).length !== expected.two_mark) {\n  return fail(\n    'AI generated incorrect two-mark question count. Expected ' +\n    expected.two_mark +\n    ', got ' +\n    sectionQuestions(1).length\n  );\n}\n\nif (sectionQuestions(2).length !== expected.five_mark) {\n  return fail(\n    'AI generated incorrect five-mark question count. Expected ' +\n    expected.five_mark +\n    ', got ' +\n    sectionQuestions(2).length\n  );\n}\n\nif (lessonKit.quiz.mcq.length !== expected.quiz_mcq) {\n  return fail(\n    'AI generated incorrect quiz MCQ count. Expected ' +\n    expected.quiz_mcq +\n    ', got ' +\n    lessonKit.quiz.mcq.length\n  );\n}\n\nif (lessonKit.answer_key.worksheet_answers.length !== expected.worksheet_answers) {\n  return fail(\n    'AI generated incorrect worksheet answer count. Expected ' +\n    expected.worksheet_answers +\n    ', got ' +\n    lessonKit.answer_key.worksheet_answers.length\n  );\n}\n\nif (lessonKit.answer_key.quiz_answers.length !== expected.quiz_answers) {\n  return fail(\n    'AI generated incorrect quiz answer count. Expected ' +\n    expected.quiz_answers +\n    ', got ' +\n    lessonKit.answer_key.quiz_answers.length\n  );\n}\n\nlessonKit.answer_key.worksheet_answers = Array.isArray(lessonKit.answer_key.worksheet_answers)\n  ? lessonKit.answer_key.worksheet_answers\n  : [];\n\nlessonKit.answer_key.quiz_answers = Array.isArray(lessonKit.answer_key.quiz_answers)\n  ? lessonKit.answer_key.quiz_answers\n  : [];\n\nconst worksheetSectionMarks = lessonKit.worksheet.sections.reduce((sum, section) => {\n  const questions = Array.isArray(section.questions) ? section.questions : [];\n  return sum + questions.reduce((qSum, q) => qSum + Number(q.marks || 0), 0);\n}, 0);\n\nconst worksheetMcqMarks = lessonKit.worksheet.mcq.reduce(\n  (sum, q) => sum + Number(q.marks || 1),\n  0\n);\n\nconst worksheetTotal = worksheetMcqMarks + worksheetSectionMarks;\n\nlessonKit.worksheet.total_marks = worksheetTotal;\n\nif (!lessonKit.answer_key.grading_rubric) {\n  lessonKit.answer_key.grading_rubric = {};\n}\n\nlessonKit.answer_key.grading_rubric.total_marks = worksheetTotal;\nlessonKit.answer_key.grading_rubric.grade_bands = [\n  {\n    range: Math.ceil(worksheetTotal * 0.8) + '-' + worksheetTotal,\n    grade: 'A',\n    descriptor: 'Excellent',\n  },\n  {\n    range:\n      Math.ceil(worksheetTotal * 0.6) +\n      '-' +\n      (Math.ceil(worksheetTotal * 0.8) - 1),\n    grade: 'B',\n    descriptor: 'Good',\n  },\n  {\n    range:\n      Math.ceil(worksheetTotal * 0.4) +\n      '-' +\n      (Math.ceil(worksheetTotal * 0.6) - 1),\n    grade: 'C',\n    descriptor: 'Satisfactory',\n  },\n  {\n    range: '0-' + (Math.ceil(worksheetTotal * 0.4) - 1),\n    grade: 'D',\n    descriptor: 'Needs Improvement',\n  },\n];\n\nlessonKit.metadata.generated_at = new Date().toISOString();\n\nreturn [{\n  json: {\n    success: true,\n    data: lessonKit\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1328, -16],
+      "id": "37581b6a-0427-4e7a-a5e8-e6d59ebb1104",
+      "name": "Process and Respond"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "POST, OPTIONS"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [1536, -16],
+      "id": "262e7f4f-1fac-418d-bc07-debdaf4be63b",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d3145e0c-7249-423c-bf5b-22b90cefa44e",
+              "leftValue": "={{ $json.success }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [384, -16],
+      "id": "00616f49-8f2b-4b39-9ef2-eba1e55aab64",
+      "name": "Is Validation Error?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"success\": false,\n  \"error\": \"Missing user_id\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [912, -512],
+      "id": "b47dfa79-c331-4312-906b-dabdc573e696",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "900f14d9-2d2b-4057-9450-283557ddf22a",
+              "leftValue": "={{ $json.mode }}",
+              "rightValue": "regenerate_worksheet_answer",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [592, -16],
+      "id": "83436a2c-acc2-4c53-a2c8-d9a836899110",
+      "name": "Is Answer Regeneration?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\n\nconst question = d.question || {};\nconst currentAnswer = d.current_answer || {};\n\nconst prompt = [\n  'You are an expert teacher.',\n  'Regenerate ONLY the model answer for the given worksheet question.',\n  'Do not change the question.',\n  'Return ONLY valid JSON. No markdown. No explanation outside JSON.',\n  '',\n  'Lesson details:',\n  'Subject: ' + d.metadata?.subject,\n  'Grade: ' + d.metadata?.grade,\n  'Topic: ' + d.metadata?.topic,\n  'Language: ' + d.metadata?.language,\n  '',\n  'Question:',\n  JSON.stringify(question),\n  '',\n  'Current answer:',\n  JSON.stringify(currentAnswer),\n  '',\n  'Answer length rules:',\n  d.answer_key_instruction || '',\n  '',\n  'Return exactly this JSON shape:',\n  JSON.stringify({\n    success: true,\n    data: {\n      answer: 'FILL',\n      explanation: 'FILL',\n    },\n  }),\n].join('\\n');\n\nreturn [{\n  json: {\n    requestBody: {\n      model: 'google/gemini-2.0-flash-001',\n      messages: [{ role: 'user', content: prompt }],\n      temperature: 0.3,\n      max_tokens: 1200,\n      response_format: { type: 'json_object' },\n    },\n  },\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [912, -272],
+      "id": "cd4c6b81-f260-4b9e-ab2b-ca5d79edd46a",
+      "name": "Build Answer Regeneration Prompt"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.requestBody) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1120, -272],
+      "id": "309b7027-c027-4813-9cf3-acf39c11dd72",
+      "name": "HTTP Request1",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YOUR_OPENROUTER_CREDENTIAL_ID",
+          "name": "OpenRouter API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const res = $input.first().json;\n\nconst content =\n  res.choices?.[0]?.message?.content ||\n  res.body?.choices?.[0]?.message?.content ||\n  '';\n\nlet parsed;\n\ntry {\n  parsed = typeof content === 'string' ? JSON.parse(content) : content;\n} catch (error) {\n  return [{\n    json: {\n      success: false,\n      error: 'AI returned invalid JSON for regenerated answer',\n    },\n  }];\n}\n\nconst data = parsed.data || parsed;\n\nif (!data.answer || String(data.answer).trim() === '') {\n  return [{\n    json: {\n      success: false,\n      error: 'AI did not return a regenerated answer',\n    },\n  }];\n}\n\nreturn [{\n  json: {\n    success: true,\n    data: {\n      answer: String(data.answer).trim(),\n      explanation: String(data.explanation || '').trim(),\n    },\n  },\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1312, -272],
+      "id": "e8db88cf-bf4e-4e97-8eda-e075c05cd0d7",
+      "name": "Process Answer Regeneration Response"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [1520, -272],
+      "id": "9e340994-2365-4f6b-9a8d-2dc4705460e4",
+      "name": "Respond to Webhook2"
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "connection": "upgrade",
+            "host": "your-n8n-host",
+            "x-real-ip": "0.0.0.0",
+            "x-forwarded-for": "0.0.0.0",
+            "x-forwarded-proto": "https",
+            "content-length": "579",
+            "sec-ch-ua-platform": "\"Windows\"",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0",
+            "sec-ch-ua": "\"Chromium\";v=\"148\", \"Microsoft Edge\";v=\"148\", \"Not/A)Brand\";v=\"99\"",
+            "content-type": "application/json",
+            "sec-ch-ua-mobile": "?0",
+            "accept": "*/*",
+            "origin": "http://localhost:8080",
+            "sec-fetch-site": "cross-site",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-dest": "empty",
+            "referer": "http://localhost:8080/",
+            "accept-encoding": "gzip, deflate, br, zstd",
+            "accept-language": "en-US,en;q=0.9,en-IN;q=0.8"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "subject": "science",
+            "grade": "grade 9 ",
+            "topic": "reproduction in plants",
+            "duration": "45 minutes",
+            "objectives": "student should learn how plants reproduce",
+            "language": "English",
+            "oneMarkQuestions": 3,
+            "twoMarkQuestions": 4,
+            "threeMarkQuestions": 1,
+            "mcqQuestions": 10,
+            "question_controls": {
+              "one_mark": 3,
+              "two_mark": 4,
+              "three_mark": 1,
+              "mcq": 10
+            },
+            "worksheet_format_instruction": "Create exactly 3 one-mark questions for Section A, 4 two-mark questions for Section B, and 1 three-mark questions for Section C. Create exactly 10 MCQ quiz questions.",
+            "user_id": "713f9201-b449-4bb4-8945-1e7ffc91e82e"
+          },
+          "webhookUrl": "https://your-n8n-host/webhook/generate-lesson",
+          "executionMode": "production"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Input": {
+      "main": [
+        [
+          {
+            "node": "Is Validation Error?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Prompt": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Process and Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process and Respond": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Validation Error?": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Answer Regeneration?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Answer Regeneration?": {
+      "main": [
+        [
+          {
+            "node": "Build Answer Regeneration Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Answer Regeneration Prompt": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Process Answer Regeneration Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Answer Regeneration Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "YOUR_VERSION_ID",
+  "meta": {
+    "instanceId": "YOUR_INSTANCE_ID"
+  },
+  "id": "YOUR_WORKFLOW_ID",
+  "tags": []
+}

@@ -1,0 +1,218 @@
+{
+  "name": "Grade Worksheet",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "grade-worksheet",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [-768, -32],
+      "id": "369638dd-18d0-4b5a-993f-38815ae01138",
+      "name": "Webhook",
+      "webhookId": "YOUR_WEBHOOK_ID"
+    },
+    {
+      "parameters": {
+        "jsCode": "const fail = (message) => [{\n  json: {\n    success: false,\n    error: message,\n  },\n}];\n\nconst body = $input.first().json.body;\n\nif (!body || typeof body !== 'object') {\n  return fail('Invalid request body');\n}\n\nconst required = [\n  'lesson_id',\n  'submission_id',\n  'student_id',\n  'worksheet',\n  'answer_key',\n  'student_answers',\n  'total_marks',\n];\n\nconst missing = required.filter((field) => {\n  const value = body[field];\n  if (value === null || value === undefined) return true;\n  if (typeof value === 'string' && value.trim() === '') return true;\n  return false;\n});\n\nif (missing.length > 0) {\n  return fail('Missing fields: ' + missing.join(', '));\n}\n\nif (!body.worksheet || typeof body.worksheet !== 'object') {\n  return fail('Invalid worksheet');\n}\n\nif (!body.answer_key || typeof body.answer_key !== 'object') {\n  return fail('Invalid answer_key');\n}\n\nif (!body.student_answers || typeof body.student_answers !== 'object') {\n  return fail('Invalid student_answers');\n}\n\nconst totalMarks = Number(body.total_marks);\n\nif (!Number.isFinite(totalMarks) || totalMarks <= 0) {\n  return fail('Invalid total_marks');\n}\n\nreturn [{\n  json: {\n    success: true,\n    lesson_id: String(body.lesson_id),\n    submission_id: String(body.submission_id),\n    student_id: String(body.student_id),\n    grade: String(body.grade || ''),\n    worksheet: body.worksheet,\n    answer_key: body.answer_key,\n    student_answers: body.student_answers,\n    total_marks: totalMarks,\n  },\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-560, -32],
+      "id": "ab2bb83b-e929-4105-b41c-97842bb8c676",
+      "name": "Validate Input"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "235805fb-82c4-40fe-a283-81037144e8b0",
+              "leftValue": "={{ $json.success }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [-352, -32],
+      "id": "3253ff4a-27ed-46fa-9f49-b7b2a95505b1",
+      "name": "Is Validation Error?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{\n  {\n    success: false,\n    error: $json.error || 'Validation failed'\n  }\n}}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [-96, -208],
+      "id": "60d80d8d-63c3-4d89-b42d-db2bad4bdc5b",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.requestBody }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [96, -16],
+      "id": "1affdbae-d4b3-4d3e-b5c8-31550bf28616",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YOUR_OPENROUTER_CREDENTIAL_ID",
+          "name": "OpenRouter API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const fail = (message) => [{\n  json: {\n    success: false,\n    error: message,\n  },\n}];\n\nconst input = $input.first().json;\n\nconst raw =\n  input?.choices?.[0]?.message?.content ||\n  input?.body?.choices?.[0]?.message?.content ||\n  input?.data?.choices?.[0]?.message?.content ||\n  '';\n\nif (!raw || typeof raw !== 'string') {\n  return fail('Empty grading response from AI');\n}\n\nlet parsed;\n\ntry {\n  parsed = JSON.parse(raw);\n} catch (error) {\n  return fail('AI returned invalid grading JSON');\n}\n\nif (!parsed || typeof parsed !== 'object') {\n  return fail('AI grading response is not an object');\n}\n\nconst score = Number(parsed.score);\nconst totalMarks = Number(parsed.total_marks);\n\nif (!Number.isFinite(score)) {\n  return fail('AI grading response missing valid score');\n}\n\nif (!Number.isFinite(totalMarks) || totalMarks <= 0) {\n  return fail('AI grading response missing valid total_marks');\n}\n\nif (score < 0 || score > totalMarks) {\n  return fail('AI grading score is outside valid range');\n}\n\nif (!parsed.grade || typeof parsed.grade !== 'string') {\n  return fail('AI grading response missing grade');\n}\n\nif (!Array.isArray(parsed.breakdown)) {\n  return fail('AI grading response missing breakdown');\n}\n\nconst cleanBreakdown = parsed.breakdown.map((item, index) => {\n  const maxMarks = Number(item.max_marks ?? 0);\n  const marksAwarded = Number(item.marks_awarded ?? 0);\n\n  return {\n    q_number: item.q_number ?? index + 1,\n    student_answer: String(item.student_answer ?? ''),\n    correct_answer: String(item.correct_answer ?? ''),\n    marks_awarded: Number.isFinite(marksAwarded) ? Math.max(0, marksAwarded) : 0,\n    max_marks: Number.isFinite(maxMarks) ? Math.max(0, maxMarks) : 0,\n    feedback: String(item.feedback ?? ''),\n  };\n});\n\nreturn [\n  {\n    json: {\n      success: true,\n      submission_id: $('Build Grading Prompt').first().json.submission_id || '',\n      score,\n      total_marks: totalMarks,\n      grade: parsed.grade.trim().substring(0, 20),\n      overall_feedback: String(parsed.overall_feedback || '').substring(0, 2000),\n      breakdown: cleanBreakdown,\n    },\n  },\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [304, -16],
+      "id": "38a7fa5d-815b-40a5-a857-3dadc82ea9dd",
+      "name": "Process Grading Response"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{\n  {\n    success: $json.success,\n    submission_id: $json.submission_id,\n    score: $json.score,\n    total_marks: $json.total_marks,\n    grade: $json.grade,\n    overall_feedback: $json.overall_feedback,\n    breakdown: $json.breakdown,\n    error: $json.error\n  }\n}}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [512, -16],
+      "id": "a3b36d35-ebe0-46c8-980b-547bdc9fc30f",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\n\nconst prompt = [\n  'You are an experienced teacher grading a student worksheet.',\n  'Grade fairly using the provided worksheet, answer key, and student answers.',\n  'Return ONLY raw JSON. Do not use markdown, code fences, comments, or explanation.',\n  '',\n  'CRITICAL JSON RULES:',\n  '- Return valid JSON only.',\n  '- Every key must use double quotes.',\n  '- Every string must use double quotes.',\n  '- Do not use trailing commas.',\n  '',\n  'GRADING RULES:',\n  '- Award marks question by question.',\n  '- Do not give more marks than the question max marks.',\n  '- MCQ questions get full marks only if the selected option matches the correct option.',\n  '- For short and long answers, award partial marks based on meaning, accuracy, completeness, and grade appropriateness.',\n  '- Be fair but not overly strict.',\n  '- If the student answer is blank, award 0.',\n  '- Overall score must be the sum of all marks_awarded.',\n  '- score must not exceed total_marks.',\n  '- grade must be based on percentage:',\n  '  A: 80-100%',\n  '  B: 60-79%',\n  '  C: 40-59%',\n  '  D: below 40%',\n  '',\n  'LESSON / STUDENT CONTEXT:',\n  'Grade: ' + d.grade,\n  'Total marks: ' + d.total_marks,\n  '',\n  'WORKSHEET:',\n  JSON.stringify(d.worksheet),\n  '',\n  'ANSWER KEY:',\n  JSON.stringify(d.answer_key),\n  '',\n  'STUDENT ANSWERS:',\n  JSON.stringify(d.student_answers),\n  '',\n  'Return JSON in this exact structure:',\n  JSON.stringify({\n    success: true,\n    score: 0,\n    total_marks: d.total_marks,\n    grade: 'A/B/C/D',\n    overall_feedback: 'Short helpful feedback for the student.',\n    breakdown: [\n      {\n        q_number: 1,\n        student_answer: 'Student answer here',\n        correct_answer: 'Correct/model answer here',\n        marks_awarded: 0,\n        max_marks: 1,\n        feedback: 'Brief feedback for this question.'\n      }\n    ]\n  }),\n].join('\\n');\n\nreturn [\n  {\n    json: {\n      submission_id: d.submission_id,\n      requestBody: {\n  submission_id: d.submission_id,\n  model: 'google/gemini-2.0-flash-001',\n  messages: [\n          {\n            role: 'user',\n            content: prompt,\n          },\n        ],\n        temperature: 0.1,\n        max_tokens: 12000,\n        response_format: { type: 'json_object' },\n      },\n    },\n  },\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-112, -16],
+      "id": "0011dcef-33f5-49a5-9b6b-4a33378a84de",
+      "name": "Build Grading Prompt"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Input": {
+      "main": [
+        [
+          {
+            "node": "Is Validation Error?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Validation Error?": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Grading Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Process Grading Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Grading Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Grading Prompt": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "YOUR_VERSION_ID",
+  "meta": {
+    "instanceId": "YOUR_INSTANCE_ID"
+  },
+  "id": "YOUR_WORKFLOW_ID",
+  "tags": []
+}

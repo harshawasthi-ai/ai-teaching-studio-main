@@ -1,0 +1,218 @@
+{
+  "name": "Evaluate Homework",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "evaluate-homework",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [-688, 48],
+      "id": "929030a4-5ffb-41f1-9aa1-6732fb753242",
+      "name": "Webhook",
+      "webhookId": "YOUR_WEBHOOK_ID"
+    },
+    {
+      "parameters": {
+        "jsCode": "const fail = (message) => [{\n  json: {\n    success: false,\n    error: message,\n  },\n}];\n\nconst body = $input.first().json.body;\n\nif (!body || typeof body !== 'object') {\n  return fail('Invalid request body');\n}\n\nconst required = [\n  'lesson_id',\n  'submission_id',\n  'student_id',\n  'metadata',\n  'lesson_plan',\n  'homework_task',\n  'homework_answer',\n];\n\nconst missing = required.filter((field) => {\n  const value = body[field];\n  if (value === null || value === undefined) return true;\n  if (typeof value === 'string' && value.trim() === '') return true;\n  return false;\n});\n\nif (missing.length > 0) {\n  return fail('Missing fields: ' + missing.join(', '));\n}\n\nif (!body.metadata || typeof body.metadata !== 'object') {\n  return fail('Invalid metadata');\n}\n\nif (!body.lesson_plan || typeof body.lesson_plan !== 'object') {\n  return fail('Invalid lesson_plan');\n}\n\nif (!body.homework_task || typeof body.homework_task !== 'string') {\n  return fail('Invalid homework_task');\n}\n\nif (!body.homework_answer || typeof body.homework_answer !== 'string') {\n  return fail('Invalid homework_answer');\n}\n\nreturn [{\n  json: {\n    success: true,\n    lesson_id: String(body.lesson_id),\n    submission_id: String(body.submission_id),\n    student_id: String(body.student_id),\n    metadata: body.metadata,\n    lesson_plan: body.lesson_plan,\n    homework_task: String(body.homework_task).substring(0, 3000),\n    homework_answer: String(body.homework_answer).substring(0, 5000),\n  },\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-480, 48],
+      "id": "9fd10ccf-0a3e-4f84-9edb-8b8f6d43cdac",
+      "name": "Validate Input"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "1220fe08-4c34-4842-9eff-2090c0a568d9",
+              "leftValue": "={{ $json.success }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [-272, 48],
+      "id": "02490f9b-cbca-495e-9913-60ed2301c51c",
+      "name": "Is Validation Error?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{\n  {\n    success: false,\n    error: $json.error || 'Validation failed'\n  }\n}}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [0, -176],
+      "id": "5c59e5c5-c702-41d5-85e0-d959909ec363",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\n\nconst prompt = [\n  'You are an experienced teacher evaluating a student homework response.',\n  'Your job is to judge how well the student understood the topic taught in class.',\n  'Use the lesson plan, lesson metadata, homework task, and student homework answer.',\n  'Return ONLY raw JSON. Do not use markdown, code fences, comments, or explanation.',\n  '',\n  'CRITICAL JSON RULES:',\n  '- Return valid JSON only.',\n  '- Every key must use double quotes.',\n  '- Every string must use double quotes.',\n  '- Do not use trailing commas.',\n  '',\n  'EVALUATION RULES:',\n  '- Do not grade only grammar or length.',\n  '- Focus mainly on understanding of the lesson topic.',\n  '- Check whether the student response connects to what was taught in the lesson plan.',\n  '- Be kind, specific, and useful.',\n  '- Do not invent facts about the student.',\n  '- Do not give marks out of total marks.',\n  '- Use understanding_score from 1 to 5 only.',\n  '- understanding_level must be one of: Excellent, Good, Developing, Needs Support.',\n  '- Give feedback suitable for the student grade level.',\n  '- strengths must include 1-3 short points.',\n  '- improvements must include 1-3 short points.',\n  '- teacher_note should briefly tell the teacher what the student seems to understand or miss.',\n  '',\n  'LESSON METADATA:',\n  JSON.stringify(d.metadata),\n  '',\n  'LESSON PLAN:',\n  JSON.stringify(d.lesson_plan),\n  '',\n  'HOMEWORK TASK:',\n  d.homework_task,\n  '',\n  'STUDENT HOMEWORK ANSWER:',\n  d.homework_answer,\n  '',\n  'Return JSON in this exact structure:',\n  JSON.stringify({\n    success: true,\n    submission_id: d.submission_id,\n    understanding_level: 'Excellent/Good/Developing/Needs Support',\n    understanding_score: 4,\n    feedback: 'Student-facing feedback explaining what they understood and what to improve.',\n    strengths: [\n      'Strength 1',\n      'Strength 2'\n    ],\n    improvements: [\n      'Improvement 1',\n      'Improvement 2'\n    ],\n    teacher_note: 'Short teacher-facing note about the student understanding.'\n  }),\n].join('\\n');\n\nreturn [\n  {\n    json: {\n      submission_id: d.submission_id,\n      requestBody: {\n        model: 'google/gemini-2.0-flash-001',\n        messages: [\n          {\n            role: 'user',\n            content: prompt,\n          },\n        ],\n        temperature: 0.1,\n        max_tokens: 8000,\n        response_format: { type: 'json_object' },\n      },\n    },\n  },\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [0, 64],
+      "id": "baaa6fd8-d7fd-47b6-a33b-ba4fbb5281f5",
+      "name": "Build Homework Evaluation Prompt"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.requestBody }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [208, 64],
+      "id": "ec6927d7-f26e-4f3c-a772-c4ed43aaabc2",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YOUR_OPENROUTER_CREDENTIAL_ID",
+          "name": "OpenRouter API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const fail = (message) => [{\n  json: {\n    success: false,\n    error: message,\n  },\n}];\n\nconst input = $input.first().json;\n\nconst raw =\n  input?.choices?.[0]?.message?.content ||\n  input?.body?.choices?.[0]?.message?.content ||\n  input?.data?.choices?.[0]?.message?.content ||\n  '';\n\nif (!raw || typeof raw !== 'string') {\n  return fail('Empty homework evaluation response from AI');\n}\n\nlet parsed;\n\ntry {\n  parsed = JSON.parse(raw);\n} catch (error) {\n  return fail('AI returned invalid homework evaluation JSON');\n}\n\nif (!parsed || typeof parsed !== 'object') {\n  return fail('AI homework evaluation response is not an object');\n}\n\nconst allowedLevels = ['Excellent', 'Good', 'Developing', 'Needs Support'];\n\nconst understandingLevel = String(parsed.understanding_level || '').trim();\nif (!allowedLevels.includes(understandingLevel)) {\n  return fail('AI homework evaluation response has invalid understanding_level');\n}\n\nconst understandingScore = Number(parsed.understanding_score);\nif (\n  !Number.isFinite(understandingScore) ||\n  understandingScore < 1 ||\n  understandingScore > 5\n) {\n  return fail('AI homework evaluation response has invalid understanding_score');\n}\n\nconst strengths = Array.isArray(parsed.strengths)\n  ? parsed.strengths.map(item => String(item)).filter(Boolean).slice(0, 3)\n  : [];\n\nconst improvements = Array.isArray(parsed.improvements)\n  ? parsed.improvements.map(item => String(item)).filter(Boolean).slice(0, 3)\n  : [];\n\nif (strengths.length === 0) {\n  return fail('AI homework evaluation response missing strengths');\n}\n\nif (improvements.length === 0) {\n  return fail('AI homework evaluation response missing improvements');\n}\n\nreturn [\n  {\n    json: {\n      success: true,\n      submission_id: $('Build Homework Evaluation Prompt').first().json.submission_id || '',\n      understanding_level: understandingLevel,\n      understanding_score: Math.round(understandingScore),\n      feedback: String(parsed.feedback || '').substring(0, 2000),\n      strengths,\n      improvements,\n      teacher_note: String(parsed.teacher_note || '').substring(0, 1000),\n    },\n  },\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [416, 64],
+      "id": "1940e93f-74df-419a-b967-599889568700",
+      "name": "Process Homework Evaluation Response"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{\n  {\n    success: $json.success,\n    submission_id: $json.submission_id,\n    understanding_level: $json.understanding_level,\n    understanding_score: $json.understanding_score,\n    feedback: $json.feedback,\n    strengths: $json.strengths,\n    improvements: $json.improvements,\n    teacher_note: $json.teacher_note,\n    error: $json.error\n  }\n}}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [624, 64],
+      "id": "5932e4d8-5794-4ca7-88ec-6d0edf0da0b3",
+      "name": "Respond to Webhook1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Input": {
+      "main": [
+        [
+          {
+            "node": "Is Validation Error?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Validation Error?": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Homework Evaluation Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Homework Evaluation Prompt": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Process Homework Evaluation Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Homework Evaluation Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "YOUR_VERSION_ID",
+  "meta": {
+    "instanceId": "YOUR_INSTANCE_ID"
+  },
+  "id": "YOUR_WORKFLOW_ID",
+  "tags": []
+}
