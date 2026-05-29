@@ -27,6 +27,15 @@ AI Teaching Studio is a premium, full-stack educational web application designed
 
 ---
 
+## 📂 Repository Structure
+
+This repository is organized as a professional full-stack monorepo:
+* **`Frontend/`**: Contains the React 19 SPA, Tailwind CSS v4, and Vercel serverless functions (`api/`).
+* **`Backend/`**: Houses n8n workflow configuration `.json` files for AI grading and homework evaluation.
+* **`Screenshots/`**: Stores screenshots showcasing the application interface.
+
+---
+
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -42,14 +51,15 @@ Ensure you have [Node.js](https://nodejs.org/) (v18+) and [npm](https://www.npmj
    cd ai-teaching-studio-main
    ```
 
-2. **Install dependencies:**
+2. **Navigate to the Frontend directory and install dependencies:**
 
    ```bash
+   cd Frontend
    npm install
    ```
 
 3. **Configure Environment Variables:**
-   Create a `.env.local` file in the root directory and add your Supabase credentials and API webhook endpoints:
+   Create a `.env.local` file inside the `Frontend/` directory and add your Supabase credentials and API webhook endpoints:
 
    ```env
    VITE_SUPABASE_URL=your_supabase_url
@@ -72,19 +82,21 @@ Ensure you have [Node.js](https://nodejs.org/) (v18+) and [npm](https://www.npmj
 
 ### Production Compilation
 
-To compile a production-ready, optimized static bundle:
+To compile a production-ready, optimized static bundle locally:
 
 ```bash
+cd Frontend
 npm run build
 ```
 
-This compiles your Single Page Application (SPA) cleanly into the `dist/` directory, outputting a highly performance-optimized `index.html` alongside standard JavaScript/CSS chunks.
+This compiles your Single Page Application (SPA) cleanly into `Frontend/dist/`, outputting a highly performance-optimized `index.html` alongside standard JavaScript/CSS chunks.
 
 ### Vercel Deployment
 
 This project is fully configured for deployment on **Vercel** with zero compute cold-starts:
 
 1. **Framework Preset**: Select `Vite` in your Vercel settings.
-2. **Build Command**: `npm run build`
-3. **Output Directory**: `dist`
-4. The router uses the `vercel.json` rewrite configuration to seamlessly support HTML5 history navigation and serverless API execution.
+2. **Root Directory**: Set this to **`Frontend`** (Vercel will treat the subfolder as the root of the project, executing installs and builds within it).
+3. **Build Command**: `npm run build`
+4. **Output Directory**: `dist`
+5. The router uses `Frontend/vercel.json` rewrite configuration to seamlessly support HTML5 history navigation and serverless API execution.
