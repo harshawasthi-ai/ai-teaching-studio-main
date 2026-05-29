@@ -237,7 +237,7 @@ Here is a visual walk-through of the **AI Teaching Studio** user experience:
 
 * **Lead Architect & Developer**: Harsh Awasthi
 * **GitHub**: [@harshawasthi-ai](https://github.com/harshawasthi-ai)
-* **LinkedIn**: [Connect on LinkedIn](https://www.linkedin.com/in/harshawasthi) *(Add your personal link)*
+* **LinkedIn**: [Connect on LinkedIn](https://www.linkedin.com/in/harsh-awasthi-981555335/)
 
 Feel free to open an issue or submit a pull request if you want to contribute to the project!
 
