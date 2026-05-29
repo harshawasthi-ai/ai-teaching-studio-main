@@ -10,6 +10,8 @@ AI Teaching Studio is a high-fidelity, full-stack educational ecosystem that aut
 
 🌐 **[Live Deployment Link](https://ai-teacher-studio-main.vercel.app)** *(Configure your Vercel URL here)*
 
+![Project Explainer](./Screenshots/project%20explainer%20image.png)
+
 ---
 
 ## 📖 Table of Contents
