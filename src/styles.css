@@ -49,8 +49,8 @@ html.dark {
   --input: oklch(1 0 0 / 8%);
   --ring: oklch(0.7 0.15 250);
 
-  --app-bg: #0A1628;
-  --app-bg-2: #0F2044;
+  --app-bg: #0a1628;
+  --app-bg-2: #0f2044;
 }
 
 html.light {
@@ -72,24 +72,31 @@ html.light {
   --input: oklch(0.95 0.02 260);
   --ring: oklch(0.7 0.15 250);
 
-  --app-bg: #F0F4FF;
-  --app-bg-2: #FFFFFF;
+  --app-bg: #f0f4ff;
+  --app-bg-2: #ffffff;
 }
 
 @layer base {
-  * { border-color: var(--color-border); }
-  html, body { background-color: var(--app-bg); color: var(--color-foreground); }
+  * {
+    border-color: var(--color-border);
+  }
+  html,
   body {
-    background: radial-gradient(ellipse at top left, rgba(37,99,235,0.15), transparent 50%),
-                radial-gradient(ellipse at bottom right, rgba(79,70,229,0.15), transparent 50%),
-                var(--app-bg);
+    background-color: var(--app-bg);
+    color: var(--color-foreground);
+  }
+  body {
+    background:
+      radial-gradient(ellipse at top left, rgba(37, 99, 235, 0.15), transparent 50%),
+      radial-gradient(ellipse at bottom right, rgba(79, 70, 229, 0.15), transparent 50%),
+      var(--app-bg);
     min-height: 100vh;
   }
 
   html.light body {
     background:
       radial-gradient(ellipse at 8% 10%, rgba(59, 130, 246, 0.12), transparent 34%),
-      radial-gradient(ellipse at 90% 85%, rgba(79, 70, 229, 0.10), transparent 34%),
+      radial-gradient(ellipse at 90% 85%, rgba(79, 70, 229, 0.1), transparent 34%),
       linear-gradient(180deg, #f8fbff 0%, #edf4ff 45%, #f7f9ff 100%);
   }
 }
@@ -147,7 +154,7 @@ html.light {
   html.light [style*="rgba(30, 111, 217, 0.15)"] {
     background: rgba(219, 234, 254, 0.72) !important;
     border-color: rgba(37, 99, 235, 0.24) !important;
-    box-shadow: 0 16px 36px rgba(37, 99, 235, 0.10);
+    box-shadow: 0 16px 36px rgba(37, 99, 235, 0.1);
   }
 
   html.light header {
@@ -262,7 +269,10 @@ html.light {
     border: 1px solid rgba(255, 255, 255, 0.14);
     background: rgba(255, 255, 255, 0.08);
     font-weight: 700;
-    transition: transform 180ms ease, background 180ms ease, color 180ms ease;
+    transition:
+      transform 180ms ease,
+      background 180ms ease,
+      color 180ms ease;
   }
 
   .library-filter-reset:hover {
@@ -293,8 +303,11 @@ html.light {
   }
 
   .lesson-card {
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.095), rgba(255, 255, 255, 0.055)) !important;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.095),
+      rgba(255, 255, 255, 0.055)
+    ) !important;
     box-shadow: 0 18px 44px rgba(2, 6, 23, 0.22);
   }
 
@@ -339,14 +352,20 @@ html.light {
   }
 
   .pdf-download-button {
-    transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+    transition:
+      transform 180ms ease,
+      box-shadow 180ms ease,
+      filter 180ms ease;
   }
 
   .pdf-download-group {
     background: linear-gradient(135deg, #1e6fd9, #4da3ff);
     color: white !important;
     box-shadow: 0 8px 20px rgba(30, 111, 217, 0.4);
-    transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+    transition:
+      transform 180ms ease,
+      box-shadow 180ms ease,
+      filter 180ms ease;
   }
 
   .pdf-download-group * {
@@ -388,7 +407,10 @@ html.light {
     background: linear-gradient(135deg, #1e6fd9, #4da3ff);
     color: white !important;
     box-shadow: 0 8px 20px rgba(30, 111, 217, 0.4);
-    transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+    transition:
+      transform 180ms ease,
+      box-shadow 180ms ease,
+      filter 180ms ease;
   }
 
   .create-new-lesson-primary * {
@@ -408,7 +430,10 @@ html.light {
   }
 
   .create-lesson-button {
-    transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+    transition:
+      transform 180ms ease,
+      box-shadow 180ms ease,
+      filter 180ms ease;
   }
 
   .create-lesson-button:hover {
@@ -422,7 +447,10 @@ html.light {
   }
 
   .generate-lesson-button {
-    transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+    transition:
+      transform 180ms ease,
+      box-shadow 180ms ease,
+      filter 180ms ease;
   }
 
   .generate-lesson-button:hover {
@@ -517,8 +545,11 @@ html.light {
   }
 
   html.light .lesson-card {
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 251, 255, 0.94)) !important;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.98),
+      rgba(248, 251, 255, 0.94)
+    ) !important;
     border-color: rgba(37, 99, 235, 0.18) !important;
     box-shadow: 0 18px 42px rgba(30, 64, 175, 0.11);
   }
@@ -616,7 +647,10 @@ html.light {
     color: white;
     font-weight: 700;
     background: rgba(255, 255, 255, 0.08);
-    transition: transform 180ms ease, background 180ms ease, border-color 180ms ease;
+    transition:
+      transform 180ms ease,
+      background 180ms ease,
+      border-color 180ms ease;
   }
 
   .dashboard-action:hover {
@@ -878,12 +912,17 @@ html.light {
   #print-content {
     position: static !important;
     width: 100%;
-    background: white !important; color: black !important;
+    background: white !important;
+    color: black !important;
     padding: 0;
   }
 
-  #print-content h1, #print-content h2, #print-content p, #print-content pre {
-    color: black !important; background: white !important;
+  #print-content h1,
+  #print-content h2,
+  #print-content p,
+  #print-content pre {
+    color: black !important;
+    background: white !important;
   }
 
   #print-content .print-doc {

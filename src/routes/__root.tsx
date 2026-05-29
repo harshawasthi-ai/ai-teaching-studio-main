@@ -1,15 +1,13 @@
 import { QueryClient } from "@tanstack/react-query";
-import {
-  Outlet,
-  Link,
-  createRootRouteWithContext,
-  useRouter,
-} from "@tanstack/react-router";
+import { Outlet, Link, createRootRouteWithContext, useRouter } from "@tanstack/react-router";
 
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="w-full max-w-md rounded-3xl border border-white/10 p-8 text-center" style={{ background: "rgba(255,255,255,0.06)" }}>
+      <div
+        className="w-full max-w-md rounded-3xl border border-white/10 p-8 text-center"
+        style={{ background: "rgba(255,255,255,0.06)" }}
+      >
         <h1 className="text-6xl font-bold text-foreground">404</h1>
         <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
         <p className="mt-2 text-sm text-muted-foreground">
@@ -34,7 +32,10 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="w-full max-w-md rounded-3xl border border-white/10 p-8 text-center" style={{ background: "rgba(255,255,255,0.06)" }}>
+      <div
+        className="w-full max-w-md rounded-3xl border border-white/10 p-8 text-center"
+        style={{ background: "rgba(255,255,255,0.06)" }}
+      >
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
           This page didn't load
         </h1>
@@ -72,4 +73,3 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 function RootComponent() {
   return <Outlet />;
 }
-
