@@ -54,11 +54,11 @@ The studio uses a modern decoupled architecture. The frontend handles high-fidel
 
 ```mermaid
 graph TD
-    A[Teacher / Student] -->|Interacts| B(Frontend: React 19 SPA)
-    B -->|User Auth & Data Sync| C[(Database: Supabase PostgreSQL & Auth)]
-    B -->|Trigger Actions / Submissions| D[Vercel Serverless Functions /api]
-    D -->|Secure HTTP Webhooks| E[Backend: n8n Workflow Automation]
-    E -->|Structured LLM Prompting| F[LLM: OpenRouter Gemini 2.0 Flash]
+    A["Teacher / Student"] -->|Interacts| B("Frontend: React 19 SPA")
+    B -->|User Auth & Data Sync| C[("Database: Supabase PostgreSQL & Auth")]
+    B -->|Trigger Actions / Submissions| D["Vercel Serverless Functions /api"]
+    D -->|Secure HTTP Webhooks| E["Backend: n8n Workflow Automation"]
+    E -->|Structured LLM Prompting| F["LLM: OpenRouter Gemini 2.0 Flash"]
     F -->|Returns Structured JSON| E
     E -->|Delivers Grading / Homework Eval| C
     C -->|Real-Time WebSockets Sync| B
